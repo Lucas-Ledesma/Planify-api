@@ -1,6 +1,5 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
@@ -13,11 +12,16 @@ export class UserService {
     });
 
     if (findUser) {
-      throw new ForbiddenException('Credentials already taken');
+      return { findUser };
     }
 
     const user = await this.prisma.user.create({
-      data: { email: createUserDto.email, password: createUserDto.password },
+      data: {
+        email: createUserDto.email,
+        name: createUserDto.name,
+        id: createUserDto.id,
+        image: createUserDto.image,
+      },
     });
 
     return { user };
@@ -35,6 +39,16 @@ export class UserService {
     }
 
     return foundUser;
+  }
+
+  async findByEmail(email: string) {
+    const user = this.prisma.user.findUnique({ where: { email } });
+
+    if (!user) {
+      throw new ForbiddenException('wrong email');
+    }
+
+    return user;
   }
 
   async delete(id: string) {
