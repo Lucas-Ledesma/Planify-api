@@ -44,6 +44,7 @@ export class UserService {
   async findByEmail(email: string) {
     const user = this.prisma.user.findUnique({ where: { email } });
 
+    console.log('a');
     if (!user) {
       throw new ForbiddenException('wrong email');
     }
