@@ -26,6 +26,11 @@ export class OrganizationController {
   }
 
   @Get(':id')
+  findById(@Param('id') id: string) {
+    return this.organizationService.findById(id);
+  }
+
+  @Get('/user/:id')
   findByOwner(@Param('id') id: string) {
     return this.organizationService.findByOwner(id);
   }

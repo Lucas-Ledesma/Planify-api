@@ -42,6 +42,16 @@ export class OrganizationService {
     return orgs;
   }
 
+  async findById(id: string) {
+    const orgs = await this.prisma.org.findUnique({ where: { id } });
+
+    if (!orgs) {
+      throw new ForbiddenException('wrong id');
+    }
+
+    return orgs;
+  }
+
   update(id: number, updateOrganizationDto: UpdateOrganizationDto) {
     return `This action updates a #${id} organization`;
   }
