@@ -1,6 +1,12 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { LoginUserDto } from './dto/login-user.dto';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UserService {
@@ -12,19 +18,46 @@ export class UserService {
     });
 
     if (findUser) {
-      return { findUser };
+      throw new NotFoundException({ msg: 'Email already taken' });
+    }
+
+    if (!createUserDto.image) {
+      createUserDto.image =
+        'https://cdn-icons-png.freepik.com/256/1144/1144760.png';
+    }
+
+    let hashedPassword = '';
+
+    if (createUserDto.password) {
+      hashedPassword = await bcrypt.hash(createUserDto.password, 10);
     }
 
     const user = await this.prisma.user.create({
       data: {
         email: createUserDto.email,
         name: createUserDto.name,
-        id: createUserDto.id,
+        password: hashedPassword,
+        providerId: createUserDto.providerId,
         image: createUserDto.image,
       },
     });
 
     return { user };
+  }
+
+  async login(LoginUserDto: LoginUserDto) {
+    const findUser = await this.prisma.user.findUnique({
+      where: { email: LoginUserDto.email },
+    });
+
+    if (
+      !findUser ||
+      !(await bcrypt.compare(LoginUserDto.password, findUser.password))
+    ) {
+      return { error: 'Invalid credentials', statusCode: 401 };
+    }
+
+    return { user: findUser };
   }
 
   async findAll() {
@@ -42,7 +75,8 @@ export class UserService {
   }
 
   async findByEmail(email: string) {
-    const user = this.prisma.user.findUnique({ where: { email } });
+    const user = await this.prisma.user.findUnique({ where: { email } });
+
     if (!user) {
       throw new ForbiddenException('wrong email');
     }
