@@ -19,7 +19,6 @@ lerna-debug.log*
 /.nyc_output
 
 # IDEs and editors
-/.env
 /.idea
 .project
 .classpath
@@ -34,3 +33,7 @@ lerna-debug.log*
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
+
+# environment variables
+.env
+.env.production
