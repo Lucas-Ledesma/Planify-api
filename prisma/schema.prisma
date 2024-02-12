@@ -8,15 +8,22 @@ generator client {
   provider = "prisma-client-js"
 }
 
+enum Role {
+  ADMIN
+  GUEST
+}
+
 model User {
-  id          String                    @id @default(uuid())
-  providerId  String?                   @unique
+  id          String                 @id @default(uuid())
+  providerId  String?                @unique
   password    String?
   name        String?
-  email       String                    @unique
+  email       String                 @unique
   image       String
-  orgs        Org[]
-  invitedUser invitedUserOrganization[]
+  invitedUser UserFromOrganization[]
+
+  notificationsSent     Notification[] @relation("Sender")
+  notificationsReceived Notification[] @relation("Receiver")
 }
 
 model Org {
@@ -24,12 +31,10 @@ model Org {
   title  String
   boards Board[]
 
-  ownerId String
-  owner   User   @relation(fields: [ownerId], references: [id])
+  createdAt String
 
-  invitedUser invitedUserOrganization[]
-
-  @@index([ownerId])
+  usersFromOrg UserFromOrganization[]
+  Notification Notification[]
 }
 
 model Board {
@@ -62,6 +67,28 @@ model List {
   @@index([boardId])
 }
 
+model Notification {
+  id             String             @id @default(uuid())
+  sender         User               @relation("Sender", fields: [senderId], references: [id])
+  senderId       String
+  receiver       User               @relation("Receiver", fields: [receiverId], references: [id])
+  receiverId     String
+  organization   Org                @relation(fields: [organizationId], references: [id])
+  organizationId String
+  status         NotificationStatus
+  createdAt      DateTime           @default(now())
+
+  @@index([senderId])
+  @@index([receiverId])
+  @@index([organizationId])
+}
+
+enum NotificationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
 model Card {
   id          String   @id @default(uuid())
   title       String
@@ -75,11 +102,13 @@ model Card {
   @@index([listId])
 }
 
-model invitedUserOrganization {
+model UserFromOrganization {
   user   User   @relation(fields: [userId], references: [id])
   userId String
   Org    Org    @relation(fields: [orgId], references: [id])
   orgId  String
+  role   Role   @default(GUEST)
+  joined String
 
   @@id([userId, orgId])
   @@index([userId])

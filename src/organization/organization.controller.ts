@@ -10,6 +10,7 @@ import {
 import { OrganizationService } from './organization.service';
 import { CreateOrganizationDto } from './dto/create-organization.dto';
 import { UpdateOrganizationDto } from './dto/update-organization.dto';
+import { InvitUserDto } from './dto/invite-user.dto';
 
 @Controller('organization')
 export class OrganizationController {
@@ -18,6 +19,11 @@ export class OrganizationController {
   @Post()
   create(@Body() createOrganizationDto: CreateOrganizationDto) {
     return this.organizationService.create(createOrganizationDto);
+  }
+
+  @Post('/invite')
+  invite(@Body() InvitUserDto: InvitUserDto) {
+    return this.organizationService.inviteUserToOrganization(InvitUserDto);
   }
 
   @Get()
@@ -31,8 +37,8 @@ export class OrganizationController {
   }
 
   @Get('/user/:id')
-  findByOwner(@Param('id') id: string) {
-    return this.organizationService.findByOwner(id);
+  findByUser(@Param('id') id: string) {
+    return this.organizationService.findByUser(id);
   }
 
   @Patch(':id')
@@ -45,6 +51,6 @@ export class OrganizationController {
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.organizationService.remove(+id);
+    return this.organizationService.remove(id);
   }
 }
