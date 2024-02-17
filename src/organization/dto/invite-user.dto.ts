@@ -1,12 +1,16 @@
-import { Role } from '@prisma/client';
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class InvitUserDto {
   @IsNotEmpty()
+  @IsEmail()
   @IsString()
-  id: string;
+  email: string;
 
   @IsString()
   @IsNotEmpty()
   orgId: string;
+
+  @IsString()
+  @IsNotEmpty()
+  id: string;
 }

@@ -60,7 +60,7 @@ export class UserService {
       return { error: 'Invalid credentials', statusCode: 401 };
     }
 
-    return { user: findUser };
+    return { msg: 'Loggin Succesfully' };
   }
 
   async findAll() {
@@ -170,7 +170,7 @@ export class UserService {
       },
     });
 
-    return notification;
+    return { msg: 'invitation sended' };
   }
 
   async getNotification(id: string) {

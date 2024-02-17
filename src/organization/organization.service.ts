@@ -47,17 +47,25 @@ export class OrganizationService {
       include: { usersFromOrg: { include: { user: true } } },
     });
 
-    return createdOrg;
+    return { msg: 'organization was created successfully' };
   }
 
   async inviteUserToOrganization(invitUserDto: InvitUserDto) {
-    const { id, orgId } = invitUserDto;
+    const { id, orgId, email } = invitUserDto;
 
-    const foundUser = await this.prisma.user.findUnique({
+    const sender = await this.prisma.user.findUnique({
       where: { id },
     });
 
-    if (!foundUser) {
+    if (!sender) {
+      throw new NotFoundException('User not found');
+    }
+
+    const reciever = await this.prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!reciever) {
       throw new NotFoundException('User not found');
     }
 
@@ -69,23 +77,8 @@ export class OrganizationService {
       throw new NotFoundException('Organization not found');
     }
 
-    const existingInvitation = await this.prisma.userFromOrganization.findFirst(
-      {
-        where: {
-          userId: foundUser.id,
-          orgId: orgId,
-        },
-      },
-    );
-
-    if (existingInvitation) {
-      throw new ConflictException(
-        'User is already invited to this organization',
-      );
-    }
-
     const notification = await this.prisma.notification.findFirst({
-      where: { receiverId: foundUser.id },
+      where: { receiverId: reciever.id },
     });
 
     if (!notification) {
@@ -102,15 +95,14 @@ export class OrganizationService {
 
     const invitedUser = await this.prisma.userFromOrganization.create({
       data: {
-        userId: foundUser.id,
+        userId: reciever.id,
         orgId: orgId,
-
         joined,
       },
       include: { user: true },
     });
 
-    return invitedUser;
+    return { msg: 'the user was successfully invited' };
   }
 
   findAll() {
@@ -172,6 +164,10 @@ export class OrganizationService {
 
     await this.prisma.userFromOrganization.deleteMany({
       where: { orgId: id },
+    });
+
+    await this.prisma.notification.deleteMany({
+      where: { organizationId: id },
     });
 
     await this.prisma.org.delete({ where: { id } });
