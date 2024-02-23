@@ -8,6 +8,7 @@ import { CreateOrganizationDto } from './dto/create-organization.dto';
 import { UpdateOrganizationDto } from './dto/update-organization.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { InvitUserDto } from './dto/invite-user.dto';
+import { UpdateBoardDto } from 'src/board/dto/update-board.dto';
 
 @Injectable()
 export class OrganizationService {
@@ -105,46 +106,30 @@ export class OrganizationService {
     return { msg: 'the user was successfully invited' };
   }
 
-  findAll() {
-    return `This action returns all organization`;
-  }
-
-  async findByUser(id: string) {
-    const orgs = await this.prisma.org.findMany({
+  async findAll({
+    boardId,
+    userId,
+    email,
+    orgId,
+  }: {
+    boardId: string;
+    userId: string;
+    email: string;
+    orgId: string;
+  }) {
+    const organizations = await this.prisma.org.findMany({
       where: {
-        usersFromOrg: {
-          some: {
-            userId: id,
-          },
-        },
+        usersFromOrg: { some: { userId } },
+
+        id: orgId,
       },
       include: {
-        usersFromOrg: true,
+        usersFromOrg: { include: { user: true } },
+        boards: true,
       },
     });
 
-    if (!orgs) {
-      throw new ForbiddenException('Wrong user id');
-    }
-
-    return orgs;
-  }
-
-  async findById(id: string) {
-    const orgs = await this.prisma.org.findUnique({
-      where: { id },
-      include: { usersFromOrg: { include: { user: true } } },
-    });
-
-    if (!orgs) {
-      throw new ForbiddenException('wrong id');
-    }
-
-    return orgs;
-  }
-
-  update(id: number, updateOrganizationDto: UpdateOrganizationDto) {
-    return `This action updates a #${id} organization`;
+    return organizations;
   }
 
   async remove(id: string) {

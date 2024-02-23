@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { OrganizationService } from './organization.service';
 import { CreateOrganizationDto } from './dto/create-organization.dto';
@@ -27,26 +28,21 @@ export class OrganizationController {
   }
 
   @Get()
-  findAll() {
-    return this.organizationService.findAll();
-  }
-
-  @Get(':id')
-  findById(@Param('id') id: string) {
-    return this.organizationService.findById(id);
-  }
-
-  @Get('/user/:id')
-  findByUser(@Param('id') id: string) {
-    return this.organizationService.findByUser(id);
-  }
-
-  @Patch(':id')
-  update(
-    @Param('id') id: string,
-    @Body() updateOrganizationDto: UpdateOrganizationDto,
+  findAll(
+    @Query()
+    {
+      boardId,
+      userId,
+      email,
+      orgId,
+    }: {
+      boardId: string;
+      userId: string;
+      email: string;
+      orgId: string;
+    },
   ) {
-    return this.organizationService.update(+id, updateOrganizationDto);
+    return this.organizationService.findAll({ boardId, userId, email, orgId });
   }
 
   @Delete(':id')
