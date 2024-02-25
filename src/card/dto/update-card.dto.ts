@@ -1,4 +1,15 @@
-import { PartialType } from '@nestjs/mapped-types';
-import { CreateCardDto } from './create-card.dto';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
-export class UpdateCardDto extends PartialType(CreateCardDto) {}
+export class UpdateCardDto {
+  @IsString()
+  @IsNotEmpty()
+  boardId: string;
+
+  @IsString()
+  @IsOptional()
+  title: string;
+
+  @IsString()
+  @IsOptional()
+  description: string;
+}

@@ -9,6 +9,8 @@ export class CardService {
   constructor(private prisma: PrismaService) {}
 
   async create(createCardDto: CreateCardDto) {
+    console.log('a');
+
     const { boardId, listId, title } = createCardDto;
 
     const org = await this.prisma.org.findFirst({
@@ -51,16 +53,99 @@ export class CardService {
     return `This action returns all card`;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} card`;
+  async findOne(id: string) {
+    if (id === 'undefined') {
+      return {};
+    }
+
+    const org = await this.prisma.org.findFirst({
+      where: {
+        boards: { some: { lists: { some: { cards: { some: { id } } } } } },
+      },
+    });
+
+    if (!org) {
+      throw new NotFoundException('Org not found');
+    }
+
+    const card = await this.prisma.card.findUnique({
+      where: { id, list: { board: { orgId: org.id } } },
+      include: { list: { select: { title: true } } },
+    });
+
+    if (!card) {
+      throw new NotFoundException('Card not found');
+    }
+
+    return card;
   }
 
-  update(id: number, updateCardDto: UpdateCardDto) {
-    return `This action updates a #${id} card`;
+  async update(id: string, updateCardDto: UpdateCardDto) {
+    const { boardId, description, title } = updateCardDto;
+
+    const foundedCard = await this.prisma.card.findUnique({ where: { id } });
+
+    if (!foundedCard) {
+      throw new NotFoundException('Card not found');
+    }
+
+    const org = await this.prisma.org.findFirst({
+      where: {
+        boards: { some: { id: boardId } },
+      },
+    });
+
+    if (!org) {
+      throw new NotFoundException('Org not found');
+    }
+
+    const card = await this.prisma.card.update({
+      where: {
+        id,
+        list: {
+          board: {
+            orgId: org.id,
+          },
+        },
+      },
+      data: {
+        title,
+        description,
+      },
+    });
+
+    return card;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} card`;
+  async remove(id: string) {
+    const foundedCard = await this.prisma.card.findUnique({ where: { id } });
+
+    if (!foundedCard) {
+      throw new NotFoundException('Card not found');
+    }
+
+    const org = await this.prisma.org.findFirst({
+      where: {
+        boards: { some: { lists: { some: { cards: { some: { id } } } } } },
+      },
+    });
+
+    if (!org) {
+      throw new NotFoundException('Org not found');
+    }
+
+    const deletedCard = await this.prisma.card.delete({
+      where: {
+        id,
+        list: {
+          board: {
+            orgId: org.id,
+          },
+        },
+      },
+    });
+
+    return deletedCard;
   }
 
   async updateCardOrder(updateOrderCard: UpdateOrderCardDto) {
