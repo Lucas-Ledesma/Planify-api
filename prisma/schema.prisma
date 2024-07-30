@@ -8,9 +8,109 @@ generator client {
   provider = "prisma-client-js"
 }
 
+enum Role {
+  ADMIN
+  GUEST
+}
+
 model User {
-  id       Int     @id @default(autoincrement())
-  email    String  @unique
-  password String  @unique
-  name     String?
+  id          String                 @id @default(uuid())
+  providerId  String?                @unique
+  password    String?
+  name        String?
+  email       String                 @unique
+  image       String
+  invitedUser UserFromOrganization[]
+
+  notificationsSent     Notification[] @relation("Sender")
+  notificationsReceived Notification[] @relation("Receiver")
+}
+
+model Org {
+  id     String  @id @default(uuid())
+  title  String
+  boards Board[]
+
+  createdAt String
+
+  usersFromOrg UserFromOrganization[]
+  Notification Notification[]
+}
+
+model Board {
+  id            String   @id @default(uuid())
+  title         String
+  imageId       String
+  imageThumbUrl String   @db.Text
+  imageFullUrl  String   @db.Text
+  imageUserName String   @db.Text
+  imageLinkHTML String   @db.Text
+  orgId         String
+  organization  Org?     @relation(fields: [orgId], references: [id])
+  lists         List[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([orgId])
+}
+
+model List {
+  id        String   @id @default(uuid())
+  title     String
+  order     Int
+  boardId   String
+  board     Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  cards     Card[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([boardId])
+}
+
+model Notification {
+  id             String             @id @default(uuid())
+  sender         User               @relation("Sender", fields: [senderId], references: [id])
+  senderId       String
+  receiver       User               @relation("Receiver", fields: [receiverId], references: [id])
+  receiverId     String
+  organization   Org                @relation(fields: [organizationId], references: [id])
+  organizationId String
+  status         NotificationStatus
+  createdAt      DateTime           @default(now())
+
+  @@index([senderId])
+  @@index([receiverId])
+  @@index([organizationId])
+}
+
+enum NotificationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+model Card {
+  id          String   @id @default(uuid())
+  title       String
+  order       Int
+  description String?  @db.Text
+  listId      String
+  list        List     @relation(fields: [listId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([listId])
+}
+
+model UserFromOrganization {
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+  Org    Org    @relation(fields: [orgId], references: [id])
+  orgId  String
+  role   Role   @default(GUEST)
+  joined String
+
+  @@id([userId, orgId])
+  @@index([userId])
+  @@index([orgId])
 }
